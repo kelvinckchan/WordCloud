@@ -1,0 +1,90 @@
+final FrequencyAnalyzer frequencyAnalyzer = new FrequencyAnalyzer();
+frequencyAnalyzer.setWordFrequenciesToReturn(300);
+frequencyAnalyzer.setMinWordLength(5);
+frequencyAnalyzer.setStopWords(loadStopWords());
+
+final List<WordFrequency> wordFrequencies = frequencyAnalyzer.load("text/new_york_positive.txt");
+final List<WordFrequency> wordFrequencies2 = frequencyAnalyzer.load("text/new_york_negative.txt");
+final Dimension dimension = new Dimension(600, 386);
+final LayeredWordCloud layeredWordCloud = new LayeredWordCloud(2, dimension, CollisionMode.PIXEL_PERFECT);
+
+layeredWordCloud.setPadding(0, 1);
+layeredWordCloud.setPadding(1, 1);
+
+layeredWordCloud.setFontOptions(0, new KumoFont("LICENSE PLATE", FontWeight.BOLD));
+layeredWordCloud.setFontOptions(1, new KumoFont("Comic Sans MS", FontWeight.BOLD));
+
+layeredWordCloud.setBackground(0, new PixelBoundryBackground("backgrounds/cloud_bg.bmp"));
+layeredWordCloud.setBackground(1, new PixelBoundryBackground("backgrounds/cloud_fg.bmp"));
+
+layeredWordCloud.setColorPalette(0, new ColorPalette(new Color(0xABEDFF), new Color(0x82E4FF), new Color(0x55D6FA)));
+layeredWordCloud.setColorPalette(1, new ColorPalette(new Color(0xFFFFFF), new Color(0xDCDDDE), new Color(0xCCCCCC)));
+
+layeredWordCloud.setFontScalar(0, new SqrtFontScalar(10, 40));
+layeredWordCloud.setFontScalar(1, new SqrtFontScalar(10, 40));
+
+layeredWordCloud.build(0, wordFrequencies);
+layeredWordCloud.build(1, wordFrequencies2);
+layeredWordCloud.writeToFile("kumo-core/output/layered_word_cloud.png");
+Create a ParallelLayeredWordCloud using 4 distinct Rectangles.
+Every Rectangle will be processed in a separate thread, thus minimizing build-time significantly NOTE: This will eventually be natively handled along with better internal data structures.
+
+final Dimension dimension = new Dimension(2000, 2000);
+ParallelLayeredWordCloud parallelLayeredWordCloud = new ParallelLayeredWordCloud(4, dimension, CollisionMode.PIXEL_PERFECT);
+
+// Setup parts for word clouds
+final Normalizer[] NORMALIZERS = new Normalizer[] { 
+    new UpperCaseNormalizer(), 
+    new LowerCaseNormalizer(),
+    new BubbleTextNormalizer(),
+    new StringToHexNormalizer() 
+};
+final Font[] FONTS = new Font[] { 
+            new Font("Lucida Sans", Font.PLAIN, 10), 
+            new Font("Comic Sans", Font.PLAIN, 10),
+            new Font("Yu Gothic Light", Font.PLAIN, 10), 
+            new Font("Meiryo", Font.PLAIN, 10) 
+};
+final List<List<WordFrequency>> listOfWordFrequencies = new ArrayList<>();
+final Point[] positions = new Point][] { new Point(0, 0), new Point(0, 1000), new Point(1000, 0), new Point(1000, 1000) };
+final Color[] colors = new Color[] { Color.RED, Color.WHITE, new Color(0x008080)/* TEAL */, Color.GREEN };
+
+// set up word clouds
+for (int i = 0; i < lwc.getLayers(); i++) {
+    final FrequencyAnalyzer frequencyAnalyzer = new FrequencyAnalyzer();
+    frequencyAnalyzer.setMinWordLength(3);
+    frequencyAnalyzer.setNormalizer(NORMALIZERS[i]);
+    frequencyAnalyzer.setWordFrequenciesToReturn(1000);
+    listOfWordFrequencies.add(frequencyAnalyzer.load("text/english_tide.txt"));
+
+    final WordCloud worldCloud = parallelLayeredWordCloud.getAt(i);
+    worldCloud.setAngleGenerator(new AngleGenerator(0));
+    worldCloud.setPadding(3);
+    worldCloud.setWordStartStrategy(new CenterWordStart());
+    worldCloud.setKumoFont(new KumoFont(FONTS[i]));
+    worldCloud.setColorPalette(new ColorPalette(colors[i]));
+
+    worldCloud.setBackground(new RectangleBackground(positions[i], dimension));
+    worldCloud.setFontScalar(new LinearFontScalar(10, 40));
+}
+
+// start building
+for (int i = 0; i < lwc.getLayers(); i++) {
+    parallelLayeredWordCloud.build(i, listOfWordFreqs.get(i));
+}
+
+parallelLayeredWordCloud.writeToFile("parallelBubbleText.png");
+Refer to JPanelDemo.java for an example integrating into a JPanel.
+
+Word Frequency File / Analyzer
+The most common way to generate word frequencies is to pass a String of text directly to FrequencyAnalyzer. The FrequencyAnalyzer contains many options to process and normalize input text.
+
+Sometimes the word counts and word frequencies are already known and a consumer would like to load them directly into Kumo. To do so, you can manually construct the List<WordFrequency> yourself, or you can load in a text file containing the word frequency and word pairs. The FrequencyFileLoader can be used to load such files. The required format is:
+
+100: frog
+94: dog
+43: cog
+20: bog
+3: fog
+1: log
+1: pog
